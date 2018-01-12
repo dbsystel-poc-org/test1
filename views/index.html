@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<style type="text/css">
+  body {
+    background: #202020;
+  }
+
+  .bottom-space {
+    margin-bottom: 1cm;
+  }
+
+  input.MyButton {
+    width: 250px;
+    padding: 15px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 150%;
+    background: #3366cc;
+    color: #fff;
+    border: 1px solid #3366cc;
+    border-radius: 10px;
+  }
+
+  input.MyButton:hover {
+    color: #ffff00;
+    background: #000;
+    border: 1px solid #fff;
+  }
+
+  input.MyButton:disabled,
+  input.MyButton[disabled] {
+    border: 1px solid #999999;
+    background-color: #cccccc;
+    opacity: 30%;
+    cursor: not-allowed;
+    color: #666666;
+  }
+
+  .disabled {
+    display: none;
+  }
+</style>
+
+<head>
+  <meta charset="UTF-8">
+  <title>DBSystel Demo Portal </title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+
+  <ul id="eventlist"> </ul>
+
+  <script>
+    var ws = new WebSocket('ws://localhost:9090/data');
+    ws.onopen = function() {
+      console.log("sending initial message to server");
+      var params = {
+        'appname': 'init',
+        'type': 'init'
+      };
+      ws.send(JSON.stringify(params));
+    };
+    ws.onclose = function() {
+      console.log("closing ws");
+    };
+    ws.onerror = function() {
+      console.log("websocket error");
+    };
+    ws.onmessage = function(d, flags) {
+      console.log(d.data);
+      $('#mytext').val(document.getElementById("mytext").value + d.data + "\n");
+      var textarea = document.getElementById('mytext');
+      textarea.scrollTop = textarea.scrollHeight;
+      if (d.data.indexOf("** Command ended successfully") !== -1) {
+        $('#mystatus').val('Successfully landed :)');
+        enableActionButtons();
+      }
+      if (d.data.indexOf("** Command ended in error") !== -1) {
+        $('#mystatus').val('Ouch! Something went wrong :-(');
+        enableActionButtons();
+      }
+    };
+
+    function disableActionButtons() {
+      document.getElementById("create").disabled = true;
+      document.getElementById("statusimg").style.display = "inline-block";
+      document.getElementById("statusimg").className = "enabled";
+    }
+
+    function enableActionButtons() {
+      document.getElementById("create").disabled = false;
+      document.getElementById("statusimg").style.display = "none";
+      document.getElementById("statusimg").className = "disabled";
+    }
+
+    function doCall(id) {
+      var params;
+      var appname = document.getElementById("appname").value;
+      var appdata = document.getElementById("appdata").value;
+      if (!appname) {
+        alert('Please enter an application name!');
+      } else {
+        disableActionButtons();
+        $('#mystatus').val('Fasten your seat belts! We\'re flying...');
+
+        params = {
+          'appname': appname,
+          'type': id,
+          'appdata': appdata
+        };
+        ws.send(JSON.stringify(params));
+      }
+    }
+  </script>
+  <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+  <script src="script.js"></script>
+</head>
+
+<body>
+  <div>
+    <nav class="navbar navbar-inverse" role="navigation" style="padding-left:130px;">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" style="color:white;">Demo</a>
+        </div>
+        <ul class="nav navbar-nav navbar-right">
+          <li><a style="color:white;"><span class="glyphicon glyphicon-user"></span> IBM</a></li>
+          <li><a style="color:white;"><span class="glyphicon glyphicon-log-out"></span> Sign Out</a></li>
+        </ul>
+    </nav>
+    </div>
+    <!-- <br/> -->
+    <div class="jumbotron" style="margin-top: -20px;">
+      <center style="font-size:30px"> <b>herzlich willkommen DBSystel!</b> </center>
+      <center style="font-size:15px"> <i>Anfordern IBM Cloud Schema Umgebung!</i> </center>
+    </div>
+    <div style="text-align:center">
+      <table align="center" style="width=100%">
+        <tr>
+          <th>
+            <p style="font-size:20px">Anwendungsname </p>
+          </th>
+          <th> <input type="text" style="font-size:20px" value="amazing" id=appname name="appname"> <br></th>
+        </tr>
+        <tr>
+          <th> &nbsp; </th>
+          <th> &nbsp; </th>
+        </tr>
+        <tr>
+          <th>
+            <p style="font-size:20px">Anwendung Umgebung Daten &nbsp;</p>
+          </th>
+          <th> <textarea id=appdata name=appdata rows="10" cols="80"></textarea> </th>
+        </tr>
+      </table>
+    </div>
+    <p class="bottom-space"></p>
+    <div style="text-align:center">
+      <input id="create" class="MyButton" type="button" value="Create" onclick="doCall(this.id)" />
+      <br></br>
+    </div>
+    <p class="bottom-space"></p>
+    <div style="text-align:center">
+      <p style="font-size:20px"> Status:
+        <input type="text" style="background-color: aliceblue;font-family: cursive;" id=mystatus size="30" name="statusMessage" value="Waiting to take off..." readonly>
+        <img id="statusimg" style="display: none;" src="images/spin.gif" alt="">
+      </p>
+    </div>
+
+    <div style="text-align:center">
+      <p class="bottom-space"></p>
+      <textarea id=mytext rows="15" cols="200"></textarea>
+    </div>
+
+  </div>
+</body>
+
+</html>
